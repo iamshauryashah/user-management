@@ -47,4 +47,11 @@ export const verification = sqliteTable("verification", {
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull()
 }, (t) => [index("verification_identifier_idx").on(t.identifier)]);
 
-export const schema = { user, session, account, verification };
+export const rateLimit = sqliteTable("rateLimit", {
+  id: text("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  count: integer("count").notNull(),
+  lastRequest: integer("last_request", { mode: "number" }).notNull()
+});
+
+export const schema = { user, session, account, verification, rateLimit };

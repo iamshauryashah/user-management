@@ -32,6 +32,7 @@ export function makeAuth(env: Env) {
       updateAge: 60 * 60 * 24
     },
     advanced: {
+      ipAddress: { ipAddressHeaders: ["cf-connecting-ip"] },
       useSecureCookies: !env.BETTER_AUTH_URL.startsWith("http://localhost"),
       crossSubDomainCookies: env.BETTER_AUTH_URL.startsWith("https://")
         ? { enabled: true, domain: "shauryaswebsites.com" }
