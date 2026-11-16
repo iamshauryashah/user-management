@@ -4,18 +4,49 @@
   window.__shauryaAccountWidget = true;
   const apiRoot = new URL(document.currentScript?.src || "https://auth.shauryaswebsites.com/widget.js").origin;
   const script = document.currentScript;
-  const mode = script?.dataset.accountTheme === "light" ? "light" : "dark";
+  // Keep one glass design aligned with the shared app launcher.
+  const siteThemes = {
+    "www.shauryaswebsites.com": ["dark", "#c4b5fd"],
+    "shauryaswebsites.com": ["dark", "#c4b5fd"],
+    "gerry.shauryaswebsite.com": ["light", "#0f766e"],
+    "midterm-uj.shauryaswebsite.com": ["light", "#798969"],
+    "presidentialsim.shauryaswebsites.com": ["light", "#15786e"],
+    "soccersim.shauryaswebsites.com": ["dark", "#cdf879"],
+    "soccermanager.shauryaswebsites.com": ["light", "#205a43"],
+    "army.shauryaswebsite.com": ["light", "#4a5568"],
+    "qed.shauryaswebsites.com": ["light", "#285b42"],
+    "feedback.shauryaswebsites.com": ["light", "#8b6ee1"],
+    "secret.shauryaswebsites.com": ["light", "#5879b5"]
+  };
+  function appearance() {
+    const saved = siteThemes[location.hostname];
+    let inferred = "light";
+    for (const color of [getComputedStyle(document.body).backgroundColor, getComputedStyle(document.documentElement).backgroundColor]) {
+      const rgb = /^rgba?\((\d+)[, ]+\s*(\d+)[, ]+\s*(\d+)/.exec(color);
+      if (rgb) {
+        inferred = (+rgb[1] * 299 + +rgb[2] * 587 + +rgb[3] * 114) / 1000 < 135 ? "dark" : "light";
+        break;
+      }
+    }
+    const override = script?.dataset.accountTheme;
+    const theme = ["dark", "light"].includes(override) ? override : saved?.[0] || inferred;
+    const customAccent = script?.dataset.accountAccent;
+    const accent = /^#[0-9a-fA-F]{6}$/.test(customAccent || "") ? customAccent : saved?.[1] || (theme === "dark" ? "#c4b5fd" : "#0f766e");
+    return { theme, accent };
+  }
   function mount() {
     if (document.getElementById("shaurya-account-widget")) return;
     const host = document.createElement("div");
     host.id = "shaurya-account-widget";
-    host.dataset.theme = mode;
+    const {theme, accent} = appearance();
+    host.dataset.theme = theme;
+    host.style.setProperty("--account-accent", accent);
     const shadow = host.attachShadow({ mode: "open" });
     shadow.innerHTML = `<style>
-      :host {all:initial;position:fixed;top:18px;right:80px;z-index:2147483001;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--surface:rgba(17,25,46,.87);--edge:rgba(196,181,253,.27);--text:#f0f2fa;--muted:#aab6d1;--field:rgba(9,16,32,.72);--accent:#c4b5fd;color:var(--text)}
-      :host([data-theme="light"]){--surface:rgba(255,255,255,.88);--edge:rgba(29,36,51,.18);--text:#1d2433;--muted:#536077;--field:rgba(238,241,247,.8);--accent:#0f766e}
+      :host {all:initial;position:fixed;top:18px;right:80px;z-index:2147483001;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--surface:rgba(17,25,46,.87);--edge:rgba(196,181,253,.27);--text:#f0f2fa;--muted:#aab6d1;--field:rgba(9,16,32,.72);--accent:var(--account-accent,#c4b5fd);color:var(--text)}
+      :host([data-theme="light"]){--surface:rgba(255,255,255,.88);--edge:rgba(29,36,51,.18);--text:#1d2433;--muted:#536077;--field:rgba(238,241,247,.8);}
       *,*:before,*:after{box-sizing:border-box}button,input{font:inherit}button{cursor:pointer}
-      .trigger{display:grid;place-items:center;width:46px;height:46px;border:1px solid var(--edge);border-radius:14px;background:var(--surface);color:var(--accent);box-shadow:0 6px 22px #0003;backdrop-filter:blur(16px);padding:0;font-size:19px;font-weight:700}
+      .trigger{display:grid;place-items:center;width:46px;height:46px;border:1px solid transparent;border-radius:14px;background:var(--surface);color:var(--accent);box-shadow:0 6px 22px #0003;backdrop-filter:blur(16px);padding:0;font-size:19px;font-weight:700}
       .trigger:hover,.trigger[aria-expanded="true"]{border-color:var(--accent);background:var(--field)}
       .panel{position:absolute;top:56px;right:0;width:min(318px,calc(100vw - 24px));max-height:calc(100dvh - 90px);overflow:auto;padding:22px;border:1px solid var(--edge);border-radius:18px;background:var(--surface);box-shadow:0 18px 60px #0005;backdrop-filter:blur(20px);color:var(--text)}
       [hidden]{display:none!important}h2{font-size:19px;margin:0 0 6px;font-weight:700;letter-spacing:-.3px}.subtitle{font-size:12px;color:var(--muted);margin:0 0 18px;line-height:1.5}
