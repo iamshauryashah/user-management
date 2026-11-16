@@ -11,7 +11,7 @@
     host.id = "shaurya-account-widget";
     host.dataset.theme = mode;
     const shadow = host.attachShadow({ mode: "open" });
-    shadow.innerHTML = \`<style>
+    shadow.innerHTML = `<style>
       :host {all:initial;position:fixed;top:18px;right:80px;z-index:2147483001;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--surface:rgba(17,25,46,.87);--edge:rgba(196,181,253,.27);--text:#f0f2fa;--muted:#aab6d1;--field:rgba(9,16,32,.72);--accent:#c4b5fd;color:var(--text)}
       :host([data-theme="light"]){--surface:rgba(255,255,255,.88);--edge:rgba(29,36,51,.18);--text:#1d2433;--muted:#536077;--field:rgba(238,241,247,.8);--accent:#0f766e}
       *,*:before,*:after{box-sizing:border-box}button,input{font:inherit}button{cursor:pointer}
@@ -46,7 +46,7 @@
         <h2 class="member-name"></h2><p class="member-email"></p><button class="submit logout" type="button">Log out</button>
         <p class="notice" role="status" aria-live="polite"></p>
       </div>
-    </section>\`;
+    </section>`;
     const $ = selector => shadow.querySelector(selector);
     const trigger = $(".trigger"), panel = $(".panel"), guest = $(".guest"), member = $(".member");
     const form = $("form"), button = guest.querySelector(".submit"), pass = $("#sh-password");
