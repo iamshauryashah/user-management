@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#10172c"><title>Account · Shaurya's Websites</title>
+<link rel="stylesheet" href="/style.css"></head>
+<body><main class="shell">
+<header><div class="brand"><span class="logo">✦</span><div><strong>Shaurya's Websites</strong><small>Your passport to every adventure</small></div></div><a class="home" href="https://www.shauryaswebsites.com/">Explore websites ↗</a></header>
+<section class="card" id="authCard">
+<div id="guest">
+<p class="eyebrow">ONE IDENTITY. EVERY ADVENTURE.</p><h1 id="heading">Create your account</h1>
+<p class="intro">Play freely. Sign in to keep your progress wherever you go.</p>
+<div class="tabs" role="tablist" aria-label="Account action"><button type="button" class="active" id="signupTab" aria-selected="true">Sign up</button><button type="button" id="loginTab" aria-selected="false">Log in</button></div>
+<form id="form">
+<label for="email">Email address</label><input id="email" type="email" autocomplete="email" required maxlength="254" placeholder="you@example.com">
+<label for="password">Password</label><input id="password" type="password" autocomplete="new-password" required minlength="12" placeholder="At least 12 characters">
+<div id="avatarGroup"><div class="labelrow"><label for="avatar">Avatar name <span class="muted">(optional)</span></label><span id="nameStatus" aria-live="polite"></span></div>
+<input id="avatar" autocomplete="nickname" minlength="3" maxlength="24" pattern="[A-Za-z0-9_]{3,24}" placeholder="Your unique name"><p class="hint">3–24 letters, numbers or underscores. Shared across all games.</p></div>
+<button class="primary" type="submit" id="submit">Create account</button></form>
+<p class="notice" id="message" aria-live="polite"></p>
+</div>
+<div id="member" hidden>
+<p class="eyebrow">WELCOME BACK</p><div class="avatarCircle" id="avatarCircle"></div><h1 id="memberHeading"></h1>
+<p class="intro">You're signed in across Shaurya's Websites.</p><div class="detail"><span>Email</span><strong id="memberEmail"></strong></div>
+<button class="primary" id="logout" type="button">Log out</button><p class="notice" id="memberMessage" aria-live="polite"></p></div>
+</section><footer>One identity. One login. Many experiences.</footer>
+</main><script src="/app.js" defer></script></body></html>
