@@ -1,0 +1,23 @@
+{
+  "name": "shauryas-user-management",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "db:local": "wrangler d1 migrations apply user-management --local",
+    "db:remote": "wrangler d1 migrations apply user-management --remote"
+  },
+  "dependencies": {
+    "better-auth": "^1.4.0",
+    "@better-auth/drizzle-adapter": "^1.4.0",
+    "drizzle-orm": "^0.44.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20261001.0",
+    "typescript": "^5.9.0",
+    "wrangler": "^4.0.0"
+  }
+}
