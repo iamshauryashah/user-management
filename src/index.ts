@@ -46,7 +46,7 @@ export default {
         const updated = { ...body, email, name: avatarName || "Player", avatarName: avatarName || undefined };
         const headers = new Headers(request.headers);
         headers.delete("content-length");
-        const rewritten = new Request(request, { headers, body: JSON.stringify(updated) });
+        const rewritten = new Request(request.url, { method: "POST", headers, body: JSON.stringify(updated) });
         try { return await auth.handler(rewritten); }
         catch { return json({ message: "Unable to create account. The email or avatar name may already be in use." }, 409); }
       }
