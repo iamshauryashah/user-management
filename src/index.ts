@@ -1,4 +1,5 @@
 import { makeAuth, type Env } from "./auth";
+import { handleAdmin } from "./admin";
 
 const RESERVED = new Set(["admin", "administrator", "root", "system", "support", "moderator", "shaurya", "staff", "official"]);
 const NAME = /^[a-zA-Z0-9_]{3,24}$/;
@@ -51,6 +52,13 @@ export default {
     }
 
     const auth = makeAuth(env);
+    if (url.pathname.startsWith("/api/admin/")) {
+      // Never expose the admin API via cross-origin JavaScript.
+      if (request.headers.get("Origin") && request.headers.get("Origin") !== new URL(env.BETTER_AUTH_URL).origin) {
+        return json({ message: "Forbidden origin" }, 403);
+      }
+      return handleAdmin(request, env, auth);
+    }
     if (url.pathname === "/api/avatar-availability" && request.method === "GET") {
       const name = (url.searchParams.get("name") || "").trim();
       if (!NAME.test(name) || RESERVED.has(name.toLowerCase())) {
@@ -103,6 +111,9 @@ export default {
         catch { return cors(json({ message: "Unable to create account. The email or avatar name may already be in use." }, 409)); }
       }
       return cors(await auth.handler(request));
+    }
+    if (url.pathname === "/admin" || url.pathname === "/admin/") {
+      return env.ASSETS.fetch(new Request(new URL("/admin.html", url), request));
     }
     return env.ASSETS.fetch(request);
   }
