@@ -41,14 +41,16 @@
     const {theme, accent} = appearance();
     host.dataset.theme = theme;
     host.style.setProperty("--account-accent", accent);
+    if (location.hostname === "gerry.shauryaswebsite.com") host.dataset.palette = "gerry";
     const shadow = host.attachShadow({ mode: "open" });
     shadow.innerHTML = `<style>
-      :host {all:initial;position:fixed;top:18px;right:80px;z-index:2147483001;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--surface:rgba(17,25,46,.87);--edge:rgba(196,181,253,.27);--text:#f0f2fa;--muted:#aab6d1;--field:rgba(9,16,32,.72);--accent:var(--account-accent,#c4b5fd);color:var(--text)}
-      :host([data-theme="light"]){--surface:rgba(255,255,255,.88);--edge:rgba(29,36,51,.18);--text:#1d2433;--muted:#536077;--field:rgba(238,241,247,.8);}
+      :host {all:initial;position:fixed;top:18px;right:80px;z-index:2147483001;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--surface:rgba(17,25,46,.48);--trigger:rgba(23,31,51,.58);--edge:rgba(196,181,253,.35);--text:#f0f2fa;--muted:#aab6d1;--field:rgba(23,31,51,.36);--hover:rgba(70,62,100,.55);--accent:var(--account-accent,#c4b5fd);color:var(--text)}
+      :host([data-theme="light"]){--surface:rgba(255,255,255,.38);--trigger:rgba(255,255,255,.53);--edge:rgba(29,36,51,.24);--text:#1d2433;--muted:#536077;--field:rgba(255,255,255,.26);--hover:rgba(225,236,231,.70);}
+      :host([data-palette="gerry"]){--surface:rgba(245,242,234,.40);--edge:rgba(15,118,110,.32);--field:rgba(255,255,255,.27);--hover:rgba(226,243,240,.68)}
       *,*:before,*:after{box-sizing:border-box}button,input{font:inherit}button{cursor:pointer}
-      .trigger{display:grid;place-items:center;width:46px;height:46px;border:1px solid transparent;border-radius:14px;background:var(--surface);color:var(--accent);box-shadow:0 6px 22px #0003;backdrop-filter:blur(16px);padding:0;font-size:19px;font-weight:700}
-      .trigger:hover,.trigger[aria-expanded="true"]{border-color:var(--accent);background:var(--field)}
-      .panel{position:absolute;top:56px;right:0;width:min(318px,calc(100vw - 24px));max-height:calc(100dvh - 90px);overflow:auto;padding:22px;border:1px solid var(--edge);border-radius:18px;background:var(--surface);box-shadow:0 18px 60px #0005;backdrop-filter:blur(20px);color:var(--text)}
+      .trigger{display:grid;place-items:center;width:46px;height:46px;border:1px solid var(--edge);border-radius:14px;background:var(--trigger);color:var(--accent);box-shadow:0 6px 22px #0003;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:0;font-size:19px;font-weight:700}
+      .trigger:hover,.trigger[aria-expanded="true"]{border-color:var(--accent);background:var(--hover)}
+      .panel{position:absolute;top:56px;right:0;width:min(318px,calc(100vw - 24px));max-height:calc(100dvh - 90px);overflow:auto;padding:22px;border:1px solid var(--edge);border-radius:18px;background:var(--surface);box-shadow:0 18px 60px #0005;backdrop-filter:blur(11px) saturate(120%);-webkit-backdrop-filter:blur(11px) saturate(120%);color:var(--text)}
       [hidden]{display:none!important}h2{font-size:19px;margin:0 0 6px;font-weight:700;letter-spacing:-.3px}.subtitle{font-size:12px;color:var(--muted);margin:0 0 18px;line-height:1.5}
       .tabs{display:flex;gap:5px;margin-bottom:16px}.tabs button{border:0;background:none;color:var(--muted);padding:7px 11px;border-bottom:2px solid transparent}.tabs button.active{color:var(--text);border-color:var(--accent);font-weight:700}
       label{display:block;font-size:12px;font-weight:650;margin:12px 0 6px}label small{color:var(--muted);font-weight:400}
@@ -58,7 +60,7 @@
       :host([data-theme="light"]) .submit{color:white}.submit:disabled{opacity:.55;cursor:wait}
       .notice{font-size:12px;line-height:1.45;color:#ffb0b0;margin:11px 0 0}.notice:empty{display:none}
       .member-email{color:var(--muted);font-size:12px;overflow-wrap:anywhere;margin:0 0 10px}
-      @media(max-width:480px){:host{top:12px;right:68px}.panel{right:-56px;padding:18px}}
+      @media(max-width:480px){.panel{padding:18px}}
       @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
     </style>
     <button class="trigger" type="button" aria-label="Account" aria-haspopup="true" aria-expanded="false" aria-controls="shaurya-account-panel">♙</button>
@@ -83,11 +85,66 @@
     const form = $("form"), button = guest.querySelector(".submit"), pass = $("#sh-password");
     const email = $("#sh-email"), avatar = $("#sh-avatar");
     let flow = "login", memberData = null, busy = false;
+    // The account control travels with Navigation, rather than competing with
+    // Navigation's obstacle-scored placement. Both controls remain independent.
+    let lastPosition = "", pendingPlacement = false;
+    function place() {
+      if (!panel.hidden) return; // Keep the form steady while someone types.
+      const width = innerWidth, height = innerHeight;
+      const mobile = width <= 480, margin = mobile ? 12 : 24;
+      const size = 46, gap = 10;
+      const navHost = document.getElementById("shaurya-app-launcher");
+      const navRect = navHost?.shadowRoot?.querySelector(".trigger")?.getBoundingClientRect();
+      let x = margin, y = mobile ? 12 : 18;
+      if (navRect && navRect.width && navRect.height) {
+        // Prefer the inside edge of the navigation icon, keeping both in a row.
+        const navCenter = (navRect.left + navRect.right) / 2;
+        x = navCenter > width / 2 ? navRect.left - size - gap : navRect.right + gap;
+        y = navRect.top;
+        // On narrow screens, stack if a side-by-side pair would leave the viewport.
+        if (x < margin || x + size > width - margin) {
+          x = Math.max(margin, Math.min(width - margin - size, navRect.left));
+          y = navRect.top < height / 2 ? navRect.bottom + gap : navRect.top - size - gap;
+        }
+      } else {
+        // Until Navigation loads, reserve its familiar top-right trigger slot.
+        x = width - margin - (size * 2 + gap);
+      }
+      x = Math.max(margin, Math.min(width - margin - size, x));
+      y = Math.max(mobile ? 12 : 18, Math.min(height - margin - size, y));
+      const signature = [x, y, width, height].join(":");
+      if (signature === lastPosition) return;
+      lastPosition = signature;
+      host.style.left = x + "px";
+      host.style.top = y + "px";
+      host.style.right = "auto";
+      host.style.bottom = "auto";
+      // Align and size the popover so it doesn't extend off-screen.
+      const panelWidth = Math.min(318, width - 24);
+      const panelX = Math.max(12, Math.min(width - 12 - panelWidth, x + size - panelWidth));
+      panel.style.left = (panelX - x) + "px";
+      panel.style.right = "auto";
+      if (y + size + gap + 220 > height && y > height / 2) {
+        panel.style.top = "auto";
+        panel.style.bottom = "56px";
+        panel.style.maxHeight = Math.max(130, y - 20) + "px";
+      } else {
+        panel.style.top = "56px";
+        panel.style.bottom = "auto";
+        panel.style.maxHeight = Math.max(130, height - y - size - 22) + "px";
+      }
+    }
+    function schedulePlacement() {
+      if (pendingPlacement || !panel.hidden) return;
+      pendingPlacement = true;
+      requestAnimationFrame(() => { pendingPlacement = false; place(); });
+    }
     function say(text, isMember = false) { (isMember ? member : guest).querySelector(".notice").textContent = text; }
     function setOpen(open) {
       panel.hidden = !open;
       trigger.setAttribute("aria-expanded", String(open));
       if (open) (memberData ? member.querySelector(".logout") : email).focus();
+      else schedulePlacement();
     }
     function switchFlow(next) {
       flow = next;
@@ -158,6 +215,28 @@
       finally{ busy = false; $(".logout").disabled = false; }
     });
     document.body.append(host);
+    place();
+    window.addEventListener("resize", schedulePlacement, { passive:true });
+    window.addEventListener("scroll", schedulePlacement, { passive:true, capture:true });
+    window.addEventListener("load", schedulePlacement, { once:true });
+    // Navigation can relocate on scroll; watch its host's inline placement.
+    const observer = new MutationObserver(schedulePlacement);
+    const observeNav = () => {
+      const nav = document.getElementById("shaurya-app-launcher");
+      if (nav) {
+        observer.observe(nav, { attributes:true, attributeFilter:["style"] });
+        schedulePlacement();
+        return true;
+      }
+      return false;
+    };
+    if (!observeNav()) {
+      const startupObserver = new MutationObserver(() => {
+        if (observeNav()) startupObserver.disconnect();
+      });
+      startupObserver.observe(document.body, { childList:true });
+      window.addEventListener("load", () => startupObserver.disconnect(), { once:true });
+    }
     refresh().catch(() => { /* authentication not deployed; show error upon interaction */ });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount, { once:true });
