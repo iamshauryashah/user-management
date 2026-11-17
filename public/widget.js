@@ -63,7 +63,7 @@
       @media(max-width:480px){.panel{padding:18px}}
       @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
     </style>
-    <button class="trigger" type="button" aria-label="Account" aria-haspopup="true" aria-expanded="false" aria-controls="shaurya-account-panel">♙</button>
+    <button class="trigger" type="button" aria-label="Account" aria-haspopup="true" aria-expanded="false" aria-controls="shaurya-account-panel"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20v-1.5a7 7 0 0 1 14 0V20"/></svg></button>
     <section class="panel" id="shaurya-account-panel" aria-label="Account" hidden>
       <div class="guest">
         <h2>Welcome</h2><p class="subtitle">One identity for every adventure.</p>
@@ -168,7 +168,8 @@
       memberData = user;
       member.hidden = !user;
       guest.hidden = !!user;
-      trigger.textContent = user ? (user.avatarName || user.email || "?").charAt(0).toUpperCase() : "♙";
+      if (user) trigger.textContent = (user.avatarName || user.email || "?").charAt(0).toUpperCase();
+      else trigger.innerHTML = '<svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20v-1.5a7 7 0 0 1 14 0V20"/></svg>';
       trigger.setAttribute("aria-label", user ? "Account: " + (user.avatarName || user.email) : "Log in or sign up");
       if (user) {
         $(".member-name").textContent = user.avatarName || "Your account";
