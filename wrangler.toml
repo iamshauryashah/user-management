@@ -9,7 +9,7 @@ BETTER_AUTH_URL = "https://auth.shauryaswebsites.com"
 [[d1_databases]]
 binding = "DB"
 database_name = "user-management"
-database_id = "REPLACE_WITH_CLOUDFLARE_D1_DATABASE_ID"
+database_id = "a2443792-b618-45c0-a3eb-8bbbca26d86f"
 migrations_dir = "migrations"
 
 [assets]
