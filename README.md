@@ -13,7 +13,9 @@ Cloudflare Worker + D1 + Better Auth MVP for platform-wide email/password signup
 - Passwords require at least 12 characters. Better Auth handles credential hashing and session tokens.
 - Reserved names: admin, administrator, root, system, support, moderator, shaurya, staff, official.
 - Sign-in/up rate limiting is persisted in D1. Logout invalidates the active session.
-- No billing, premium entitlements, password reset email or email verification in v1.
+- User types are now modeled as **guest**, **standard**, **premium**, and **admin**. Subscription purchases/billing, password reset email, and email verification are not implemented yet.
+- `guest` = no authenticated session; `standard` = signed in without premium/admin flags; `premium` = signed in with premium; `admin` = signed in with admin role (takes display precedence).
+- Admin role and premium status are **independent**: an admin can also be premium. Each flag defaults to false, including for previously created accounts.
 
 ## Cloudflare setup
 
@@ -26,13 +28,36 @@ Cloudflare Worker + D1 + Better Auth MVP for platform-wide email/password signup
 
 **Do not commit** your real secret or production D1 database ID if you prefer to keep deployment details private (the database ID is not a password). Never commit `.dev.vars`.
 
+### Access model and migration
+
+**Before deploying code that reads user types**, apply the new migration (the initial migration is already installed):
+
+```bash
+npx wrangler d1 migrations apply user-management --remote
+```
+
+Migration `0002_user_types.sql` creates `user_access`, keyed by the permanent `user.id`. Existing accounts require no backfill: a missing row means **standard**. Signup never accepts role or premium entitlement fields.
+
+`GET /api/me` returns `null` for guests, or an authenticated profile with `userType` (`standard`, `premium`, or `admin`), `isAdmin` and `isPremium`. Access checks must always run on trusted servers, not on the widget's UI state.
+
+**Bootstrap an administrator only through authorized database administration, never by modifying client-side fields.** For a verified target account, run this from the secure Wrangler environment with the correct user ID substituted:
+
+```sql
+INSERT INTO user_access (user_id, is_admin, is_premium, updated_at)
+VALUES ('EXISTING_USER_ID', 1, 0, unixepoch())
+ON CONFLICT(user_id) DO UPDATE
+SET is_admin = 1, updated_at = unixepoch();
+```
+
+To assign premium manually for initial testing, use the same approach with `is_premium = 1`, without modifying `is_admin`. Only account administrators should perform these changes. Later, subscription billing will update entitlements via verified server-to-server events. No self-service role upgrade endpoint exists.
+
 ### Health check
 
 `GET /health` returns a JSON status. `GET /api/me` returns the signed-in user's ID, email and avatar name, or `null` when guest. `GET /api/avatar-availability?name=Example` checks a name. Better Auth runs at `/api/auth/*`.
 
 ### Integration approach
 
-The account UI is hosted at `auth.shauryaswebsites.com`. Existing public applications **must not be changed until separately integrated**. The recommended next step is a shared account menu/launcher that redirects to this first-party login page rather than embedding passwords in each game. App-owned permissions and player progress must be keyed by the immutable user ID, not the email or avatar name.
+The account UI and shared glass widget are hosted at `auth.shauryaswebsites.com`. Public applications load a single shared `widget.js` script; login/signup/logout stay inline. Individual applications still own gameplay permissions and progress, keyed by the immutable user ID rather than email or avatar name.
 
 Better Auth is configured for cross-subdomain cookies for `shauryaswebsites.com`. **The legacy `shauryaswebsite.com` domain is a separate site** and requires a deliberate redirect/code-exchange or proxy-based SSO solution, not shared cookies. Do not use third-party-cookie-based SSO.
 
