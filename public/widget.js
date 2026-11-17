@@ -60,6 +60,7 @@
       :host([data-theme="light"]) .submit{color:white}.submit:disabled{opacity:.55;cursor:wait}
       .notice{font-size:12px;line-height:1.45;color:#ffb0b0;margin:11px 0 0}.notice:empty{display:none}
       .member-email{color:var(--muted);font-size:12px;overflow-wrap:anywhere;margin:0 0 10px}
+      .admin-link{display:block;padding:10px 0;color:var(--accent);font-size:13px;text-decoration:none;font-weight:700}.admin-link:hover{text-decoration:underline}
       @media(max-width:480px){.panel{padding:18px}}
       @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
     </style>
@@ -76,7 +77,7 @@
         </form><p class="notice" role="status" aria-live="polite"></p>
       </div>
       <div class="member" hidden>
-        <h2 class="member-name"></h2><p class="member-email"></p><button class="submit logout" type="button">Log out</button>
+        <h2 class="member-name"></h2><p class="member-email"></p><a class="admin-link" href="https://auth.shauryaswebsites.com/admin" target="_blank" rel="noopener noreferrer" hidden>Manage users ↗</a><button class="submit logout" type="button">Log out</button>
         <p class="notice" role="status" aria-live="polite"></p>
       </div>
     </section>`;
@@ -174,6 +175,7 @@
       if (user) {
         $(".member-name").textContent = user.avatarName || "Your account";
         $(".member-email").textContent = user.email;
+        $(".admin-link").hidden = !user.isAdmin;
       }
       host.dispatchEvent(new CustomEvent("shaurya:auth-changed", { bubbles:true, composed:true, detail: { user: user || null } }));
       window.dispatchEvent(new CustomEvent("shaurya:auth-changed", { detail: { user: user || null } }));
