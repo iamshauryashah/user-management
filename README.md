@@ -66,3 +66,28 @@ Better Auth is configured for cross-subdomain cookies for `shauryaswebsites.com`
 Before opening public signup: verify deployment using real D1, check dependency/runtime compatibility, exercise rate limiting, duplicate-email and duplicate-avatar races, and test login/logout in Safari, Chrome and Firefox. Configure Cloudflare WAF / bot protections if abuse emerges. Email ownership is **not yet verified**; do not use email as proof of ownership for privileged actions. Add recovery and verification before handling purchases.
 
 The migration is kept in `migrations/0001_initial.sql`; changes to Better Auth's schema must be accompanied by a new migration.
+
+## Admin dashboard
+
+The administrative directory is available at **https://auth.shauryaswebsites.com/admin** after deploying the current Worker.
+
+It offers read-only user directory search (50 results per page), avatar/email/creation date, and explicit **Save** controls to grant or revoke Premium and Admin privileges. Admin status and Premium status remain independent. A user cannot remove their own admin role; the server also prevents removing the last administrator. Each API operation checks the Better Auth session and a server-owned admin flag. Admin mutations require JSON and an exact same-origin request.
+
+**Bootstrap the first administrator once through D1, not through public sign-up:**
+
+1. Register the intended admin account normally using the login widget or first-party account page.
+2. In Cloudflare D1, run a SELECT to verify its email and user ID:
+
+```bash
+npx wrangler d1 execute user-management --remote --command "SELECT id, email, avatar_name FROM user WHERE email = 'YOUR_EMAIL@example.com' COLLATE NOCASE;"
+```
+
+3. Only after confirming the intended account and ownership, grant the role by email. Replace the email in the following command with the verified account's email:
+
+```bash
+npx wrangler d1 execute user-management --remote --command "INSERT INTO user_access (user_id, is_admin, is_premium, updated_at) SELECT id, 1, 0, unixepoch() FROM user WHERE email = 'YOUR_EMAIL@example.com' COLLATE NOCASE ON CONFLICT(user_id) DO UPDATE SET is_admin=1, updated_at=unixepoch();"
+```
+
+4. Log in to the same account at `auth.shauryaswebsites.com`, then open `/admin`. Do not share credentials or password hashes.
+
+The directory is restricted to authenticated admins; visiting `/admin` does not grant privileges. Admin activity auditing and stronger admin authentication (e.g., MFA) should be implemented before delegating privileges broadly.
