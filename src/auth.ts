@@ -53,6 +53,17 @@ export function makeAuth(env: Env) {
       "https://www.shauryaswebsites.com",
       "https://shauryaswebsite.com",
       "https://www.shauryaswebsite.com",
+      "https://gerry.shauryaswebsite.com",
+      "https://midterm-uj.shauryaswebsite.com",
+      "https://race.shauryaswebsite.com",
+      "https://hello.shauryaswebsite.com",
+      "https://army.shauryaswebsite.com",
+      "https://presidentialsim.shauryaswebsites.com",
+      "https://soccersim.shauryaswebsites.com",
+      "https://soccermanager.shauryaswebsites.com",
+      "https://qed.shauryaswebsites.com",
+      "https://feedback.shauryaswebsites.com",
+      "https://secret.shauryaswebsites.com",
       env.BETTER_AUTH_URL
     ]
   });
