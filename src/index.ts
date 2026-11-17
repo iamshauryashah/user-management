@@ -1,5 +1,6 @@
 import { makeAuth, type Env } from "./auth";
 import { handleAdmin } from "./admin";
+import { adminHtml } from "./admin-page";
 
 const RESERVED = new Set(["admin", "administrator", "root", "system", "support", "moderator", "shaurya", "staff", "official"]);
 const NAME = /^[a-zA-Z0-9_]{3,24}$/;
@@ -112,8 +113,18 @@ export default {
       }
       return cors(await auth.handler(request));
     }
-    if (url.pathname === "/admin" || url.pathname === "/admin/") {
-      return env.ASSETS.fetch(new Request(new URL("/admin.html", url), request));
+    if (url.pathname === "/admin" || url.pathname === "/admin/" || url.pathname === "/admin.html") {
+      // Cloudflare's HTML asset redirect rules may send /admin.html back to /admin.
+      // Return the shell directly, avoiding a /admin <-> /admin.html loop.
+      return new Response(request.method === "HEAD" ? null : adminHtml, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/html; charset=utf-8",
+          "Cache-Control": "no-store",
+          "X-Content-Type-Options": "nosniff",
+          "X-Robots-Tag": "noindex, nofollow"
+        }
+      });
     }
     return env.ASSETS.fetch(request);
   }
