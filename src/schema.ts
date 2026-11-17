@@ -54,4 +54,11 @@ export const rateLimit = sqliteTable("rateLimit", {
   lastRequest: integer("last_request", { mode: "number" }).notNull()
 });
 
-export const schema = { user, session, account, verification, rateLimit };
+export const userAccess = sqliteTable("user_access", {
+  userId: text("user_id").primaryKey().references(() => user.id, { onDelete: "cascade" }),
+  isAdmin: integer("is_admin", { mode: "boolean" }).notNull().default(false),
+  isPremium: integer("is_premium", { mode: "boolean" }).notNull().default(false),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull()
+});
+
+export const schema = { user, session, account, verification, rateLimit, userAccess };
