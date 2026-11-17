@@ -61,7 +61,22 @@ export default {
     }
     if (url.pathname === "/api/me" && request.method === "GET") {
       const session = await auth.api.getSession({ headers: request.headers });
-      return cors(json(session ? { id: session.user.id, email: session.user.email, avatarName: (session.user as { avatarName?: string }).avatarName ?? null } : null));
+      if (!session) return cors(json(null));
+      // No row means standard (also covers every existing account).
+      const access = await env.DB.prepare(
+        "SELECT is_admin, is_premium FROM user_access WHERE user_id = ? LIMIT 1"
+      ).bind(session.user.id).first<{ is_admin: number; is_premium: number }>();
+      const isAdmin = access?.is_admin === 1;
+      const isPremium = access?.is_premium === 1;
+      const userType = isAdmin ? "admin" : isPremium ? "premium" : "standard";
+      return cors(json({
+        id: session.user.id,
+        email: session.user.email,
+        avatarName: (session.user as { avatarName?: string }).avatarName ?? null,
+        userType,
+        isAdmin,
+        isPremium
+      }));
     }
     if (url.pathname.startsWith("/api/auth/")) {
       // Validate and normalize signup fields on the server, not merely in the browser.
