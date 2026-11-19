@@ -98,4 +98,36 @@ async function loadPages(){
 }
 $("refreshPages").addEventListener("click",loadPages);
 loadPages();
+
+async function loadFeatures(){
+ const table=$("features");table.replaceChildren();
+ const tr=document.createElement("tr"),cell=td(tr);cell.colSpan=6;cell.textContent="Loading feature permissions…";table.append(tr);
+ try{
+   const data=await api("/api/admin/features");table.replaceChildren();
+   for(const feature of data.features){
+     const row=document.createElement("tr"),label=td(row);
+     const strong=document.createElement("strong");strong.textContent=feature.site+" · "+feature.name;
+     const hint=document.createElement("small");hint.textContent=feature.description;hint.style.display="block";label.append(strong,hint);
+     const controls={};
+     for(const role of ["guest","standard","premium","admin"]){
+       const cell=td(row),wrapper=document.createElement("label");wrapper.className="role";
+       const input=document.createElement("input");input.type="checkbox";input.checked=feature.policy[role];
+       input.setAttribute("aria-label",role+" access to "+feature.name);wrapper.append(input);cell.append(wrapper);controls[role]=input;
+     }
+     const action=td(row),save=document.createElement("button");save.className="save";save.textContent="Save";save.type="button";save.disabled=true;
+     const dirty=()=>{save.disabled=Object.keys(controls).every(role=>controls[role].checked===feature.policy[role]);};
+     for(const input of Object.values(controls))input.addEventListener("change",dirty);
+     save.addEventListener("click",async()=>{
+       if(!confirm("Update "+feature.name+" permissions?"))return;
+       const policy=Object.fromEntries(Object.entries(controls).map(([role,input])=>[role,input.checked]));
+       save.disabled=true;msg("Saving feature permissions…");
+       try{await api("/api/admin/features/"+encodeURIComponent(feature.key),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(policy)});
+         Object.assign(feature.policy,policy);msg("Feature access updated.");dirty();
+       }catch(error){msg(error.message,true);dirty();}
+     });action.append(save);table.append(row);
+   }
+ }catch(error){table.replaceChildren();const row=document.createElement("tr"),cell=td(row);cell.colSpan=6;cell.textContent=error.message;table.append(row);}
+}
+$("refreshFeatures").addEventListener("click",loadFeatures);
+loadFeatures();
 })();
