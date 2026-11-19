@@ -111,11 +111,11 @@ async function loadFeatures(){
      const controls={};
      for(const role of ["guest","standard","premium","admin"]){
        const cell=td(row),wrapper=document.createElement("label");wrapper.className="role";
-       const input=document.createElement("input");input.type="checkbox";input.checked=feature.policy[role];
+       const input=document.createElement("input");input.type="checkbox";input.checked=feature.policy[role];input.disabled=feature.locked===true;
        input.setAttribute("aria-label",role+" access to "+feature.name);wrapper.append(input);cell.append(wrapper);controls[role]=input;
      }
-     const action=td(row),save=document.createElement("button");save.className="save";save.textContent="Save";save.type="button";save.disabled=true;
-     const dirty=()=>{save.disabled=Object.keys(controls).every(role=>controls[role].checked===feature.policy[role]);};
+     const action=td(row),save=document.createElement("button");save.className="save";save.textContent=feature.locked?"Locked":"Save";save.type="button";save.disabled=true;
+     const dirty=()=>{save.disabled=feature.locked||Object.keys(controls).every(role=>controls[role].checked===feature.policy[role]);};
      for(const input of Object.values(controls))input.addEventListener("change",dirty);
      save.addEventListener("click",async()=>{
        if(!confirm("Update "+feature.name+" permissions?"))return;
