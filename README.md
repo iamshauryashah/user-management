@@ -121,3 +121,26 @@ The Admin Dashboard is a non-editable special case: the server requires an activ
 
 **Important deployment boundary:** the matrix stores policy and the central `GET /api/page-access/{key}` endpoint evaluates it based on a real session. This does **not** automatically protect HTML/assets or APIs served by other Workers or static hosts; those sites must enforce the decision server-side. The matrix UI explicitly warns about this. Do not restrict another site expecting effective security until its Worker/edge middleware has been integrated, deployed, and tested. Same-site cookies do not span `shauryaswebsites.com` and `shauryaswebsite.com`; use the canonical domain or a deliberate SSO flow for restricted legacy sites.
 
+
+## Feature access matrix
+
+The administrator-only dashboard also has a **Feature access** matrix immediately below **Page access**. It governs actions inside games independently of page visibility.
+
+The first feature is `touchline-auto-ready`, with these initial effective permissions:
+
+| Feature | Guest | Standard | Premium | Admin |
+| --- | --- | --- | --- | --- |
+| Touchline · Auto-ready | No | No | Yes | Yes |
+
+Apply migration `0004_feature_access.sql` once, **before** deploying the Worker and Touchline changes:
+
+```bash
+git pull origin main
+npx wrangler d1 migrations apply user-management --remote
+```
+
+Admins can edit each role's permission using `GET /api/admin/features` and `POST /api/admin/features/:key`. All mutations require a verified administrator session and same-origin JSON POST. The effective entitlement is returned by `GET /api/feature-access/touchline-auto-ready`, based on the authenticated session and D1 policy, not a client-supplied role. Touchline's Worker uses a Cloudflare service binding (`AUTH_SERVICE`) to verify permission when Auto-ready is enabled. Premium billing remains out of scope; manually assigned `is_premium` or `is_admin` determines the initial eligibility.
+
+The UI disables the Auto-ready configuration button for ineligible accounts with a native hover tooltip **Upgrade to Premium**. Stopping an already active timer remains possible for account safety.
+
+**Operational note:** Previously scheduled Auto-ready timers are not automatically cancelled on entitlement changes; revocation blocks new/updated activation. A follow-up timer-owner linkage and revocation check is required for immediate cancellation of existing scheduled timers.
