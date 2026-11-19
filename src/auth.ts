@@ -54,6 +54,7 @@ export function makeAuth(env: Env) {
       "https://shauryaswebsite.com",
       "https://www.shauryaswebsite.com",
       "https://gerry.shauryaswebsite.com",
+      "https://gerry.shauryaswebsites.com",
       "https://midterm-uj.shauryaswebsite.com",
       "https://race.shauryaswebsite.com",
       "https://hello.shauryaswebsite.com",

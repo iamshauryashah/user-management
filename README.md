@@ -91,3 +91,17 @@ npx wrangler d1 execute user-management --remote --command "INSERT INTO user_acc
 4. Log in to the same account at `auth.shauryaswebsites.com`, then open `/admin`. Do not share credentials or password hashes.
 
 The directory is restricted to authenticated admins; visiting `/admin` does not grant privileges. Admin activity auditing and stronger admin authentication (e.g., MFA) should be implemented before delegating privileges broadly.
+
+### Gerry saved maps integration
+
+Gerry's canonical origin (`https://gerry.shauryaswebsites.com`) uses the same
+first-party session as the account widget. Its own Worker verifies the session
+through a service binding to this Worker and owns all map storage; authentication
+does not store game state. The member menu includes a **My Gerry maps** link.
+Gerry can open the existing inline account panel by dispatching
+`window.dispatchEvent(new CustomEvent('shaurya:auth-open'))`; account changes
+continue to use the existing `shaurya:auth-changed` event. No login UI is copied
+into Gerry.
+
+The lockfile records compatible Better Auth/Drizzle dependencies; use `npm ci`
+for reproducible installs. Run `npm run typecheck` before deploying.

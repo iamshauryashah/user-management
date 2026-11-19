@@ -9,6 +9,7 @@
     "www.shauryaswebsites.com": ["dark", "#c4b5fd"],
     "shauryaswebsites.com": ["dark", "#c4b5fd"],
     "gerry.shauryaswebsite.com": ["light", "#0f766e"],
+    "gerry.shauryaswebsites.com": ["light", "#0f766e"],
     "midterm-uj.shauryaswebsite.com": ["light", "#798969"],
     "presidentialsim.shauryaswebsites.com": ["light", "#15786e"],
     "soccersim.shauryaswebsites.com": ["dark", "#cdf879"],
@@ -41,7 +42,7 @@
     const {theme, accent} = appearance();
     host.dataset.theme = theme;
     host.style.setProperty("--account-accent", accent);
-    if (location.hostname === "gerry.shauryaswebsite.com") host.dataset.palette = "gerry";
+    if (["gerry.shauryaswebsite.com", "gerry.shauryaswebsites.com"].includes(location.hostname)) host.dataset.palette = "gerry";
     const shadow = host.attachShadow({ mode: "open" });
     shadow.innerHTML = `<style>
       :host {all:initial;position:fixed;top:18px;right:80px;z-index:2147483001;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--surface:rgba(17,25,46,.48);--trigger:rgba(23,31,51,.58);--edge:rgba(196,181,253,.35);--text:#f0f2fa;--muted:#aab6d1;--field:rgba(23,31,51,.36);--hover:rgba(70,62,100,.55);--accent:var(--account-accent,#c4b5fd);color:var(--text)}
@@ -77,7 +78,7 @@
         </form><p class="notice" role="status" aria-live="polite"></p>
       </div>
       <div class="member" hidden>
-        <h2 class="member-name"></h2><p class="member-email"></p><a class="admin-link" href="https://auth.shauryaswebsites.com/admin" target="_blank" rel="noopener noreferrer" hidden>Manage users ↗</a><button class="submit logout" type="button">Log out</button>
+        <h2 class="member-name"></h2><p class="member-email"></p><a class="admin-link" href="https://auth.shauryaswebsites.com/admin" target="_blank" rel="noopener noreferrer" hidden>Manage users ↗</a><a class="admin-link saved-maps-link" href="https://gerry.shauryaswebsites.com/?maps=1">My Gerry maps ↗</a><button class="submit logout" type="button">Log out</button>
         <p class="notice" role="status" aria-live="polite"></p>
       </div>
     </section>`;
@@ -184,6 +185,7 @@
       const current = await fetchJson("/api/me");
       paint(current);
     }
+    window.addEventListener("shaurya:auth-open", () => setOpen(true));
     trigger.addEventListener("click", () => setOpen(panel.hidden));
     document.addEventListener("pointerdown", e => { if (!panel.hidden && !e.composedPath().includes(host)) setOpen(false); });
     document.addEventListener("keydown", e => { if (e.key === "Escape" && !panel.hidden) { setOpen(false); trigger.focus(); } });

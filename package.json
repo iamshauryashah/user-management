@@ -11,9 +11,9 @@
     "db:remote": "wrangler d1 migrations apply user-management --remote"
   },
   "dependencies": {
-    "better-auth": "^1.4.0",
     "@better-auth/drizzle-adapter": "^1.4.0",
-    "drizzle-orm": "^0.44.0"
+    "better-auth": "^1.4.0",
+    "drizzle-orm": "^0.45.4"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261114.1",
