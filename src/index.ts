@@ -158,6 +158,15 @@ export default {
         }
       });
     }
+    if (url.pathname === "/" || url.pathname === "/index.html") {
+      // Header-level noindex also covers crawlers that don't parse HTML metadata.
+      const page = await env.ASSETS.fetch(request);
+      const headers = new Headers(page.headers);
+      headers.set("X-Robots-Tag", "noindex, nofollow");
+      return new Response(request.method === "HEAD" ? null : page.body, {
+        status: page.status, statusText: page.statusText, headers
+      });
+    }
     return env.ASSETS.fetch(request);
   }
 } satisfies ExportedHandler<Env>;
