@@ -11,5 +11,10 @@
 <p class="hint">Standard accounts are free. Premium access and admin privileges are independent. All changes require administrator authentication.</p>
 <div class="table-scroll"><table><thead><tr><th>Account</th><th>Joined</th><th>Premium</th><th>Admin</th><th></th></tr></thead><tbody id="users"></tbody></table></div>
 <div class="pagination"><button id="prev" type="button" class="secondary">Previous</button><span id="pageText"></span><button id="next" type="button" class="secondary">Next</button></div>
+<section class="access-section" aria-labelledby="access-heading">
+<div class="access-head"><div><p class="eyebrow">SITE PERMISSIONS</p><h2 id="access-heading">Page access</h2><p class="hint">Choose which user types may access each website. All sites start open to everyone. The Admin page is permanently admin-only.</p></div><button class="secondary" type="button" id="refreshPages">Refresh permissions</button></div>
+<div class="table-scroll"><table class="access-table"><thead><tr><th>Website</th><th>Guest</th><th>Standard</th><th>Premium</th><th>Admin</th><th>Save</th></tr></thead><tbody id="pages"><tr><td colspan="6">Loading page permissions…</td></tr></tbody></table></div>
+<p class="hint">Policies are stored centrally. A website enforces a restriction only after its request handling is integrated with the central access check. Keep pages public until their enforcement is deployed and tested.</p>
+</section>
 </section>
 </main><script defer src="/admin.js"></script></body></html>
