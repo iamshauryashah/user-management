@@ -105,3 +105,19 @@ into Gerry.
 
 The lockfile records compatible Better Auth/Drizzle dependencies; use `npm ci`
 for reproducible installs. Run `npm run typecheck` before deploying.
+
+## Central website access matrix
+
+The **People & access** dashboard includes a **Page access** matrix for Guest, Standard, Premium, and Admin. Every site defaults to allowing all roles. Administrators can save per-page policy in D1.
+
+Before using it, apply the new schema migration to production:
+```bash
+git pull origin main
+npx wrangler d1 migrations apply user-management --remote
+```
+The migration `0003_page_access.sql` is additive. It does not change existing users, accounts, or saved maps.
+
+The Admin Dashboard is a non-editable special case: the server requires an active administrator session before serving `/admin`, `/admin/`, or `/admin.html`, and all admin APIs independently authorize requests. The landing page's Admin tile is hidden by default and shown after the shared account widget reports an administrator.
+
+**Important deployment boundary:** the matrix stores policy and the central `GET /api/page-access/{key}` endpoint evaluates it based on a real session. This does **not** automatically protect HTML/assets or APIs served by other Workers or static hosts; those sites must enforce the decision server-side. The matrix UI explicitly warns about this. Do not restrict another site expecting effective security until its Worker/edge middleware has been integrated, deployed, and tested. Same-site cookies do not span `shauryaswebsites.com` and `shauryaswebsite.com`; use the canonical domain or a deliberate SSO flow for restricted legacy sites.
+
