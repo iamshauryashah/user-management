@@ -1,6 +1,8 @@
 import { makeAuth, type Env } from "./auth";
 import { handleAdmin } from "./admin";
 import { adminHtml } from "./admin-page";
+import { checkPageAccess } from "./page-access";
+import { PAGE_KEYS } from "./page-catalog";
 
 const RESERVED = new Set(["admin", "administrator", "root", "system", "support", "moderator", "shaurya", "staff", "official"]);
 const NAME = /^[a-zA-Z0-9_]{3,24}$/;
@@ -60,6 +62,18 @@ export default {
       }
       return handleAdmin(request, env, auth);
     }
+    if (url.pathname.startsWith("/api/page-access/") && request.method === "GET") {
+      const page = url.pathname.slice("/api/page-access/".length);
+      if (!PAGE_KEYS.has(page)) return cors(json({ message: "Unknown page" }, 404));
+      const session = await auth.api.getSession({ headers: request.headers });
+      let role: "guest" | "standard" | "premium" | "admin" = "guest";
+      if (session) {
+        const access = await env.DB.prepare("SELECT is_admin,is_premium FROM user_access WHERE user_id=?")
+          .bind(session.user.id).first<{is_admin:number;is_premium:number}>();
+        role = access?.is_admin === 1 ? "admin" : access?.is_premium === 1 ? "premium" : "standard";
+      }
+      return cors(json({page,role,allowed:await checkPageAccess(env,page,role)}));
+    }
     if (url.pathname === "/api/avatar-availability" && request.method === "GET") {
       const name = (url.searchParams.get("name") || "").trim();
       if (!NAME.test(name) || RESERVED.has(name.toLowerCase())) {
@@ -114,6 +128,11 @@ export default {
       return cors(await auth.handler(request));
     }
     if (url.pathname === "/admin" || url.pathname === "/admin/" || url.pathname === "/admin.html") {
+      const session = await auth.api.getSession({ headers: request.headers });
+      if (!session) return new Response("Sign in required to access administration.", { status: 401, headers: { "Content-Type":"text/plain; charset=utf-8", "Cache-Control":"no-store" } });
+      const access = await env.DB.prepare("SELECT is_admin FROM user_access WHERE user_id=?")
+        .bind(session.user.id).first<{is_admin:number}>();
+      if (access?.is_admin !== 1) return new Response("Administrator access required.", { status: 403, headers: { "Content-Type":"text/plain; charset=utf-8", "Cache-Control":"no-store" } });
       // Cloudflare's HTML asset redirect rules may send /admin.html back to /admin.
       // Return the shell directly, avoiding a /admin <-> /admin.html loop.
       return new Response(request.method === "HEAD" ? null : adminHtml, {
