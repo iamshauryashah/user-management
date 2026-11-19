@@ -1,4 +1,5 @@
 import type { Env } from "./auth";
+import { handlePageAdministration } from "./page-access";
 
 const response = (value: unknown, status = 200) => new Response(JSON.stringify(value), {
   status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" }
@@ -23,6 +24,10 @@ export async function handleAdmin(request: Request, env: Env, auth: AuthService)
   const actor = session.user.id;
   const current = await env.DB.prepare("SELECT is_admin FROM user_access WHERE user_id = ?").bind(actor).first<{ is_admin: number }>();
   if (current?.is_admin !== 1) return response({ message: "Administrator access required" }, 403);
+
+  if (url.pathname === "/api/admin/pages" || url.pathname.startsWith("/api/admin/pages/")) {
+    return handlePageAdministration(request, env);
+  }
 
   if (url.pathname === "/api/admin/users" && method === "GET") {
     const search = (url.searchParams.get("q") || "").trim().slice(0, 100);
