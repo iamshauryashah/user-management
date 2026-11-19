@@ -3,6 +3,7 @@ import { handleAdmin } from "./admin";
 import { adminHtml } from "./admin-page";
 import { checkPageAccess } from "./page-access";
 import { PAGE_KEYS } from "./page-catalog";
+import { evaluateFeature, FEATURE_CATALOG } from "./feature-access";
 
 const RESERVED = new Set(["admin", "administrator", "root", "system", "support", "moderator", "shaurya", "staff", "official"]);
 const NAME = /^[a-zA-Z0-9_]{3,24}$/;
@@ -61,6 +62,18 @@ export default {
         return json({ message: "Forbidden origin" }, 403);
       }
       return handleAdmin(request, env, auth);
+    }
+    if (url.pathname.startsWith("/api/feature-access/") && request.method === "GET") {
+      const key = url.pathname.slice("/api/feature-access/".length);
+      if (!FEATURE_CATALOG.some(feature => feature.key === key)) return cors(json({message:"Unknown feature"},404));
+      const session = await auth.api.getSession({headers:request.headers});
+      let role: "guest"|"standard"|"premium"|"admin" = "guest";
+      if (session) {
+        const row = await env.DB.prepare("SELECT is_admin,is_premium FROM user_access WHERE user_id=?")
+          .bind(session.user.id).first<{is_admin:number;is_premium:number}>();
+        role = row?.is_admin===1?"admin":row?.is_premium===1?"premium":"standard";
+      }
+      return cors(json({feature:key,role,allowed:await evaluateFeature(env,key,role)}));
     }
     if (url.pathname.startsWith("/api/page-access/") && request.method === "GET") {
       const page = url.pathname.slice("/api/page-access/".length);
