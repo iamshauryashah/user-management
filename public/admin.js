@@ -62,4 +62,40 @@ $("refresh").addEventListener("click",load);
 $("prev").addEventListener("click",()=>{if(state.page>0){state.page--;load();}});
 $("next").addEventListener("click",()=>{if(state.hasMore){state.page++;load();}});
 load();
+
+async function loadPages(){
+  const table=$("pages");table.replaceChildren();
+  const loading=document.createElement("tr"),loadingCell=td(loading);loadingCell.colSpan=6;loadingCell.textContent="Loading permissions…";table.append(loading);
+  try{
+    const data=await api("/api/admin/pages");
+    table.replaceChildren();
+    for(const page of data.pages){
+      const tr=document.createElement("tr");
+      const nameCell=td(tr);
+      const link=document.createElement("a");link.href=page.url;link.target="_blank";link.rel="noopener noreferrer";link.textContent=page.name;nameCell.append(link);
+      const inputs={};
+      for(const role of ["guest","standard","premium","admin"]){
+        const cell=td(tr),label=document.createElement("label");label.className="role";
+        const checkbox=document.createElement("input");checkbox.type="checkbox";checkbox.checked=page.policy[role];checkbox.disabled=page.locked;
+        checkbox.setAttribute("aria-label",role+" access to "+page.name);
+        inputs[role]=checkbox;label.append(checkbox);cell.append(label);
+      }
+      const action=td(tr),save=document.createElement("button");save.className="save";save.type="button";save.textContent=page.locked?"Locked":"Save";save.disabled=true;
+      const dirty=()=>save.disabled=page.locked||["guest","standard","premium","admin"].every(role=>inputs[role].checked===page.policy[role]);
+      for(const input of Object.values(inputs))input.addEventListener("change",dirty);
+      save.addEventListener("click",async()=>{
+        const policy=Object.fromEntries(Object.entries(inputs).map(([role,input])=>[role,input.checked]));
+        if(!confirm("Update access to "+page.name+"?"))return;
+        save.disabled=true;msg("Saving page access…");
+        try{
+          await api("/api/admin/pages/"+encodeURIComponent(page.key),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(policy)});
+          Object.assign(page.policy,policy);msg("Page access saved.");dirty();
+        }catch(error){msg(error.message,true);dirty();}
+      });
+      action.append(save);table.append(tr);
+    }
+  }catch(error){table.replaceChildren();const tr=document.createElement("tr"),cell=td(tr);cell.colSpan=6;cell.textContent=error.message;table.append(tr);}
+}
+$("refreshPages").addEventListener("click",loadPages);
+loadPages();
 })();
