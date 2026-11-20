@@ -1,4 +1,6 @@
 const el=(id)=>document.getElementById(id);
+// Forward the signed OAuth request when sign-in was initiated by ChatGPT.
+const oauthQuery=window.location.search.includes("sig=")?window.location.search.slice(1):null;
 let mode="signup", checkId=0;
 function setMode(next){
   mode=next;
@@ -49,9 +51,10 @@ el("form").addEventListener("submit",async(event)=>{
   submit.disabled=true;message("");
   try{
     if(mode==="signup"){
-      await api("/api/auth/sign-up/email",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password,name:avatarName||"Player",...(avatarName?{avatarName}:{})})});
+      const response=await api("/api/auth/sign-up/email",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password,name:avatarName||"Player",...(avatarName?{avatarName}:{}),...(oauthQuery?{oauth_query:oauthQuery}:{})})});
     }else{
-      await api("/api/auth/sign-in/email",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password})});
+      const response=await api("/api/auth/sign-in/email",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password,...(oauthQuery?{oauth_query:oauthQuery}:{})})});
+      if(response?.redirect && typeof response.url==="string"){window.location.assign(response.url);return;}
     }
     el("password").value="";
     await session();

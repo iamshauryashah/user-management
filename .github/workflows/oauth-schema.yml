@@ -1,0 +1,30 @@
+name: Generate OAuth schema for review (branch only)
+on:
+  push:
+    branches: [feature/mcp-oauth]
+permissions:
+  contents: write
+jobs:
+  schema:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts
+      - name: Generate complete Better Auth Drizzle schema
+        run: |
+          mkdir -p scripts
+          npx -y auth@1.7.27 generate --config ./auth.schema.config.ts --adapter drizzle --dialect sqlite --output ./scripts/generated-auth-schema.ts --yes
+      - name: Commit dependency lockfile and generated reference schema only to OAuth branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json scripts/generated-auth-schema.ts
+          if ! git diff --cached --quiet; then
+            git commit -m "Generate OAuth dependency lock and schema reference"
+            git push
+          fi

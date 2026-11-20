@@ -1,4 +1,6 @@
 import { betterAuth } from "better-auth";
+import { jwt } from "better-auth/plugins";
+import { mcp } from "@better-auth/mcp";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "./schema";
@@ -14,6 +16,24 @@ export function makeAuth(env: Env) {
   const db = drizzle(env.DB, { schema });
   return betterAuth({
     appName: "Shaurya's Websites",
+    disabledPaths: ["/token"],
+    plugins: [
+      jwt({ disableSettingJwtHeader: true }),
+      mcp({
+        loginPage: "/",
+        consentPage: "/consent",
+        resource: "https://mcp.shauryaswebsites.com/mcp",
+        // ChatGPT clients that do not provide CIMD need RFC 7591 registration.
+        // This registers clients, not users; consent + the central admin check still gate writes.
+        allowDynamicClientRegistration: true,
+        allowUnauthenticatedClientRegistration: true,
+        clientRegistrationDefaultApplicationType: "infer",
+        scopes: ["openid", "profile", "offline_access", "mcp:feedback.write"],
+        clientRegistrationDefaultScopes: ["openid", "profile", "offline_access", "mcp:feedback.write"],
+        accessTokenExpiresIn: 900,
+        refreshTokenReuseInterval: 0
+      })
+    ],
     baseURL: env.BETTER_AUTH_URL,
     secret: env.BETTER_AUTH_SECRET,
     database: drizzleAdapter(db, { provider: "sqlite", schema }),
