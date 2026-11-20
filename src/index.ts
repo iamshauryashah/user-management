@@ -1,4 +1,6 @@
 import { makeAuth, type Env } from "./auth";
+import { oauthProviderAuthServerMetadata } from "@better-auth/oauth-provider";
+import { consentPage } from "./mcp-consent";
 import { handleAdmin } from "./admin";
 import { adminHtml } from "./admin-page";
 import { checkPageAccess } from "./page-access";
@@ -56,6 +58,32 @@ export default {
     }
 
     const auth = makeAuth(env);
+    // RFC 8414 discovery is on our existing centralized identity domain.
+    if (request.method === "GET" && (
+      url.pathname === "/.well-known/oauth-authorization-server/api/auth" ||
+      url.pathname === "/api/auth/.well-known/oauth-authorization-server"
+    )) {
+      return oauthProviderAuthServerMetadata(auth)(request);
+    }
+    if (url.pathname === "/consent" && request.method === "GET") {
+      return consentPage(request, env, auth);
+    }
+    // MCP's internal, bearer-authenticated role check. Never trust a user ID
+    // supplied in JSON: Better Auth UserInfo derives it from a valid OAuth token.
+    if (url.pathname === "/api/mcp/write-access" && request.method === "GET") {
+      const authorization = request.headers.get("Authorization");
+      if (!authorization || !/^Bearer [^ ]+$/.test(authorization)) return json({allowed:false},401);
+      const userinfo = await auth.handler(new Request(
+        "https://auth.shauryaswebsites.com/api/auth/oauth2/userinfo",
+        { method:"GET",headers:{Authorization:authorization,Accept:"application/json"} }
+      ));
+      if (!userinfo.ok) return json({allowed:false},401);
+      const identity = await userinfo.json() as { sub?: unknown };
+      if (typeof identity?.sub !== "string") return json({allowed:false},401);
+      const access = await env.DB.prepare("SELECT is_admin FROM user_access WHERE user_id=?")
+        .bind(identity.sub).first<{is_admin:number}>();
+      return json({allowed:access?.is_admin===1});
+    }
     if (url.pathname.startsWith("/api/admin/")) {
       // Never expose the admin API via cross-origin JavaScript.
       if (request.headers.get("Origin") && request.headers.get("Origin") !== new URL(env.BETTER_AUTH_URL).origin) {
