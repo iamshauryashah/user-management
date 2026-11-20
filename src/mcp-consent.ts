@@ -22,7 +22,9 @@ export async function consentPage(request: Request, env: Env, auth: ReturnType<t
   if (row?.is_admin !== 1) return html("<p>Only platform administrators can grant Feedback write access.</p>",403);
   const params = new URL(request.url).searchParams;
   const names = new Set(["sig", "ba_param", ...params.getAll("ba_param")]);
-  const oauthQuery = new URLSearchParams([...params].filter(([key])=>names.has(key))).toString();
+  const signedParams = new URLSearchParams();
+  params.forEach((value, key) => { if (names.has(key)) signedParams.append(key,value); });
+  const oauthQuery = signedParams.toString();
   const context = await auth.$context;
   if (!oauthQuery || !(await verifyOAuthQueryParams(oauthQuery, context.secret))) {
     return html("<p>Invalid or expired authorization request. Start again from ChatGPT.</p>",400);
